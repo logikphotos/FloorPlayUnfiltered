@@ -6,205 +6,180 @@
 
 ---
 
-## What This Is
+## What this project does
 
-A single-file, self-contained quiz that:
+This repo contains the public-facing quiz and post-purchase confirmation flow for FloorplayUnfiltered.
 
-- Walks visitors through 6 questions
-- Captures their name + email
-- **Sends Ali a notification** with their answers and result type
-- **Emails the visitor** their personalized result automatically
-- Displays the result on-screen at the end
+The current experience works like this:
 
-No backend server needed. No subscription required on the free tier.
+1. A visitor opens the quiz page.
+2. They complete six questions with a progress bar and answer selections.
+3. After the final question, the app asks for first name and email.
+4. The form is submitted to Formspree with the quiz result + answers.
+5. Formspree sends a notification to Ali and can trigger the user’s autoresponder email.
+6. The visitor is shown a result page with a call-to-action for the guide.
+7. After purchase, they reach a confirmation page with a PDF download button.
 
----
-
-## Files
-
-```
-floorplay-quiz/
-├── index.html   ← The entire quiz (all CSS, JS, and HTML in one file)
-└── README.md    ← This setup guide
-```
+This is intentionally lightweight: the quiz is static HTML, CSS, and JavaScript with no backend required for the basic flow.
 
 ---
 
-## Step 1 — Formspree is Already Connected ✅
+## Files in the project
 
-The quiz is wired to your live Formspree form at:
-
-```
-https://formspree.io/f/mqpqkbgy
-```
-
-No code changes needed. The Formspree Ajax SDK (`@formspree/ajax`) is loaded from CDN and handles all submissions automatically — no bundler, no npm, no server.
-
-**What to confirm in your Formspree dashboard:**
-
-1. Log in at [https://formspree.io](https://formspree.io)
-2. Open your `FloorplayUnfiltered Quiz` form
-3. Under **Settings → Notifications**, confirm your email address is set (this is where Ali receives submission alerts)
-4. Free tier: 50 submissions/month. Upgrade to Basic ($10/mo) for 1,000/mo.
-
----
-
-## Step 2 — Set Up the Autoresponder Email (Formspree)
-
-This is the email your quiz takers receive with their results.
-
-1. In your Formspree dashboard, open your form
-2. Click **Integrations** → **Email Notifications** → **Add Autoresponder**
-3. Set **Reply To field** to `email` (matches the field name in the form)
-4. Use this subject line:
-
-   ```
-   Your sexual comfort quiz result — FloorplayUnfiltered
-   ```
-5. Paste the email body below (edit as needed):
-
----
-
-**Autoresponder Email Template:**
-
-```
-Hi {{firstName}},
-
-Your quiz result: {{resultHeading}}
-
-{{resultType}}
-
----
-
-This result is not a diagnosis — it simply highlights an area that may be worth exploring, whether that's pelvic floor tension, nervous-system protection, arousal and lubrication, communication, or other health factors.
-
-I created Understanding Pain with Sex to help you explore:
-
-• Pelvic floor tension and relaxation
-• Nervous-system regulation
-• Curiosity instead of fear or self-judgment
-• Communication and consent scripts
-• Lubrication, positioning, and pacing
-• Non-penetrative intimacy
-• Gentle strategies for graded exploration
-• When to seek professional support
-
-Get the guide here: [INSERT YOUR PURCHASE LINK]
-
-Your body does not have to be forced into comfort. The goal is more choice, safety, curiosity, and pleasurable experiences that work for you.
-
-Warmly,
-Ali Schum, MS OTR/L
-FloorplayUnfiltered
-@FloorplayUnfiltered
+```text
+FloorPlayUnfiltered/
+├── quiz.html              # main quiz experience
+├── Confirmation.html      # purchase confirmation/download page
+├── FloorplayUnfiltered Quiz — Deployment & Setup Guide.md
+└── README.md              # project summary / repo landing page
 ```
 
 ---
 
-## Step 3 — View Submissions (Ali's Dashboard)
+## Current user flow
 
-Every time someone completes the quiz and enters their email:
+### Quiz flow
 
-1. Log in to **[https://formspree.io](https://formspree.io)**
-2. Click your form → **Submissions**
-3. You'll see each entry with:
-   - First name
-   - Email address
-   - Result type (Mostly A / B / C / Mixed)
-   - Result heading
-   - All 6 individual answers (as a JSON object)
-   - Submission timestamp
-4. You can also **export to CSV** (Submissions → Export) to build your email list in Mailchimp, ConvertKit, Flodesk, etc.
+- Intro screen explains the six-question assessment
+- Question 1 through Question 6 each gather one answer
+- Progress bar updates as the user moves through the survey
+- Final result is categorized as Mostly A, Mostly B, Mostly C, or Mixed
+- The app captures the person’s first name and email before showing the result
+- The result page includes a CTA to purchase the complete guide
 
----
+### Submission flow
 
-## Step 4 — Export to Your Email Platform (Optional)
+The Formspree submission includes:
 
-To sync leads into Mailchimp, Flodesk, ConvertKit, or another platform:
+- `firstName`
+- `email`
+- `resultType`
+- `resultHeading`
+- `answers`
+- `submittedAt`
 
-**Option A — Zapier (easiest)**
+This gives Ali a full record of the visitor’s result and the question-by-question responses.
 
-1. Go to zapier.com → New Zap
-2. Trigger: Formspree → New Submission
-3. Action: Add Subscriber to Mailchimp / Flodesk / ConvertKit
-4. Map fields: `firstName` → First Name, `email` → Email, `resultType` → Tag
+### Purchase flow
 
-**Option B — Formspree native integrations** Formspree Pro ($8/mo) has native Mailchimp and ConvertKit integrations in the dashboard.
-
-**Option C — Manual CSV export** Formspree free tier → Submissions → Export CSV → import manually.
+Once the visitor clicks the guide CTA, they are routed to the payment page. After successful purchase, they land on `Confirmation.html`, where they can access the guide PDF or download link.
 
 ---
 
-## Step 5 — Deploy to GitHub Pages (Free Hosting)
+## Recent updates
 
-This puts the quiz at a public URL you can link from Instagram.
+The project has recently been updated to reflect the live conversion flow:
 
-1. Go to **github.com** and sign in (or create a free account)
-2. Click **New Repository**
-   - Name it `floorplay-quiz` (or anything you like)
-   - Set it to **Public**
-   - Click Create
-3. Upload `index.html` to the repository
-   - Click **Add file** → **Upload files**
-   - Drag in `index.html` → Click **Commit changes**
-4. Go to **Settings** → **Pages** (in the left sidebar)
-5. Under **Source**, choose:
+- Added a clearer six-question quiz structure
+- Added a progress indicator and refined result presentation
+- Added the name/email capture step before result delivery
+- Added result data fields to the Formspree payload for lead tracking and segmentation
+- Added a dedicated confirmation page for guide delivery
+- Kept the app entirely front-end static and easy to deploy
+
+---
+
+## Formspree setup
+
+The form is wired to a live Formspree form and should be configured in the dashboard.
+
+### Confirm these settings
+
+1. Log in to https://formspree.io
+2. Open the relevant form linked to this quiz
+3. Under Settings → Notifications, confirm Ali’s email is listed
+4. Under Integrations, set up the autoresponder email if desired
+5. Verify the submission fields match the front-end input names in `quiz.html`
+
+### Important note
+
+The front-end form currently posts the following key values:
+
+- `firstName`
+- `email`
+- `resultType`
+- `resultHeading`
+- `answers`
+- `submittedAt`
+
+If your Formspree dashboard is missing a field or the autoresponder is not firing, confirm the hidden input names and the connected form settings.
+
+---
+
+## Autoresponder email template
+
+Use an autoresponder in Formspree with a subject such as:
+
+```text
+Your sexual comfort quiz result — FloorplayUnfiltered
+```
+
+Typical email content should include:
+
+- the visitor’s name
+- their result heading
+- their result type
+- a quick explanation that the result is educational, not diagnostic
+- a link to the complete guide or a purchase CTA
+
+---
+
+## GitHub Pages deployment
+
+To publish the quiz for free:
+
+1. Go to GitHub and create a public repository.
+2. Upload `quiz.html` to the repo root.
+3. Go to Settings → Pages.
+4. Set Source to:
    - Branch: `main`
    - Folder: `/ (root)`
-   - Click **Save**
-6. After about 60 seconds, your quiz will be live at:
+5. Save and wait for the Pages URL to generate.
+6. Share the live page link.
 
-   ```
-   https://YOUR-GITHUB-USERNAME.github.io/floorplay-quiz/
-   ```
-7. You can share this URL in your Instagram bio, link-in-bio tool (Linktree, etc.), or DMs.
+Example live URL:
 
----
-
-## Customizing the Guide Purchase Link
-
-In `index.html`, find this line:
-
-```html
-<a href="#" class="btn-cta" id="guideCTA">Get the complete guide</a>
-```
-
-Replace `#` with your actual product link (Gumroad, Shopify, Stan Store, etc.):
-
-```html
-<a href="https://your-store.gumroad.com/l/your-guide" class="btn-cta" id="guideCTA">Get the complete guide</a>
+```text
+https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPO-NAME/
 ```
 
 ---
 
-## Testing Before Launch
+## Customize the guide CTA
+
+In `quiz.html`, find the CTA link and replace it with the current product URL when needed:
+
+```html
+<a href="https://your-store-url.com" class="btn-cta" id="guideCTA">Get the complete guide</a>
+```
+
+Update this whenever the product landing page or checkout link changes.
+
+---
+
+## Test before launch
 
 Before sharing publicly:
 
-1. Open `index.html` in your browser (double-click the file)
-2. Complete the quiz with a test email address
-3. Confirm you receive both:
-   - **Your notification** (from Formspree to Ali's email)
-   - **The autoresponder** (to your test email)
-4. Check the Formspree dashboard → Submissions to confirm the entry appears
-5. Only then share the GitHub Pages URL
+1. Open `quiz.html` in a browser.
+2. Complete the full quiz using a test email.
+3. Make sure Formspree receives the submission.
+4. Check that the notification email lands.
+5. Confirm the autoresponder email is sent if enabled.
+6. Click the purchase CTA and verify the post-purchase confirmation page loads correctly.
 
 ---
 
-## Free Tier Limits
+## Notes
 
-| Service | Free Limit | Notes |
-| --- | --- | --- |
-| Formspree | 50 submissions/month | Upgrade to Basic ($10/mo) for 1,000/mo |
-| GitHub Pages | Unlimited | No limits on visitors |
-| Email autoresponder | Included with Formspree | Per submission |
-
-If the quiz goes viral and you hit 50 submissions fast, Formspree Basic ($10/month) handles up to 1,000.
+- This project is intentionally static and easy to maintain.
+- It does not require a server for the quiz itself.
+- The main operational dependencies are the live Formspree form and the current product checkout URL.
 
 ---
 
 ## Questions?
 
-Reach out to your developer (Darius) or Formspree support at [support@formspree.io](mailto:support@formspree.io).
+Reach out to your developer or form support if the form submission, autoresponder, or deploy flow needs troubleshooting.
 
 © 2026 Ali Schum / FloorplayUnfiltered
