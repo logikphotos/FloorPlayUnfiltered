@@ -792,63 +792,31 @@
         <li>Exclusive introductory offer on the complete guide</li>
       </ul>
 
-      <!--
-        Formspree Ajax SDK form.
-        • id="fs-quiz-form" — referenced by initForm() and by submitResults()
-        • data-fs-success  — SDK hides the form and shows this div on success;
-                             our fsSuccessHandler() fires at the same moment
-        • Hidden inputs carry computed quiz data with every submission so
-          Ali's Formspree dashboard shows the full picture per entry.
-        • _subject / _replyto are Formspree magic fields (underscore prefix).
-      -->
-      <div data-fs-success id="fsSuccessMsg" style="display:none;"></div>
-      <div data-fs-error   id="fsFormError"  style="display:none;" class="submit-error"></div>
-
-      <form id="fs-quiz-form" novalidate>
-
-        <!-- Hidden fields — populated by submitResults() before SDK fires -->
-        <input type="hidden" id="hiddenResultType"    name="resultType"    value="" />
-        <input type="hidden" id="hiddenResultHeading" name="resultHeading" value="" />
-        <input type="hidden" id="hiddenAnswers"       name="answers"       value="" />
-        <input type="hidden" id="hiddenSubmittedAt"   name="submittedAt"   value="" />
-        <!-- Formspree magic fields -->
-        <input type="hidden" name="_subject" value="FloorplayUnfiltered Quiz — New Result" />
-
-        <div class="field-group">
-          <div class="field-row">
-            <label for="firstName">First name</label>
-            <input type="text"
-                   id="firstName"
-                   name="firstName"
-                   placeholder="Your first name"
-                   autocomplete="given-name"
-                   data-fs-field />
-            <span class="error-msg"  id="nameError">Please enter your first name.</span>
-            <span data-fs-error="firstName" class="error-msg"></span>
-          </div>
-          <div class="field-row">
-            <label for="emailInput">Email address</label>
-            <input type="email"
-                   id="emailInput"
-                   name="email"
-                   placeholder="you@email.com"
-                   autocomplete="email"
-                   data-fs-field />
-            <span class="error-msg"  id="emailError">Please enter a valid email address.</span>
-            <span data-fs-error="email" class="error-msg"></span>
-          </div>
+      <div class="field-group">
+        <div class="field-row">
+          <label for="firstName">First name</label>
+          <input type="text"
+                 id="firstName"
+                 name="firstName"
+                 placeholder="Your first name"
+                 autocomplete="given-name" />
+          <span class="error-msg" id="nameError">Please enter your first name.</span>
         </div>
+        <div class="field-row">
+          <label for="emailInput">Email address</label>
+          <input type="email"
+                 id="emailInput"
+                 name="email"
+                 placeholder="you@email.com"
+                 autocomplete="email" />
+          <span class="error-msg" id="emailError">Please enter a valid email address.</span>
+        </div>
+      </div>
 
-        <p class="consent-line">By submitting, you agree to receive educational pelvic health content and occasional offers from FloorplayUnfiltered. You may unsubscribe at any time.</p>
+      <p class="consent-line">By submitting, you agree to receive educational pelvic health content and occasional offers from FloorplayUnfiltered. You may unsubscribe at any time.</p>
 
-        <!-- data-fs-submit-btn: SDK disables this during the network request -->
-        <button type="button"
-                class="btn-submit"
-                id="submitBtn"
-                data-fs-submit-btn
-                onclick="submitResults()">Get my results</button>
-
-      </form>
+      <button type="button" class="btn-submit" id="submitBtn" onclick="submitResults()">Get my results</button>
+      <span class="submit-error" id="submitError">Something went wrong. Please try again.</span>
 
       <span class="skip-link" onclick="skipEmail()">Skip — just show my results</span>
     </div>
@@ -873,7 +841,7 @@
 
       <div class="result-cta-box">
         <p>The complete guide — <em>Understanding Pain with Sex</em> — covers pelvic floor relaxation, nervous-system regulation, lubrication, communication scripts, graded exploration, and when to seek professional support.</p>
-        <a href="https://buy.stripe.com/5kQfZjbbd6blgXp3VXfQI00" target="_blank" rel="noopener noreferrer" class="btn-cta" id="guideCTA">Get the complete guide</a>
+        <a href="https://buy.stripe.com/test_cNidRb4NodfJ7ou9Rt77O00" target="_blank" rel="noopener noreferrer" class="btn-cta" id="guideCTA">Get the complete guide</a>
       </div>
 
       <p class="result-note">This result is not a diagnosis. Sexual discomfort is often multifactorial. Consider tracking patterns and seeking an individualized evaluation if symptoms persist.</p>
@@ -1016,8 +984,8 @@ function showEmailCapture() {
   emailScreen.addEventListener('animationend', () => emailScreen.classList.remove('fade-in'), { once: true });
 }
 
-function submitResults() {
-  // ── Client-side validation (runs before the SDK submits) ──────
+async function submitResults() {
+  // ── Client-side validation ─────────────────────────────────────
   const firstName = document.getElementById('firstName').value.trim();
   const email     = document.getElementById('emailInput').value.trim();
 
@@ -1029,7 +997,6 @@ function submitResults() {
     document.getElementById('nameError').classList.remove('visible');
   }
 
-  // Basic email format check
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailPattern.test(email)) {
     document.getElementById('emailError').classList.add('visible');
@@ -1039,25 +1006,44 @@ function submitResults() {
   }
   if (!valid) return;
 
-  // ── Inject computed quiz data into hidden fields ───────────────
-  // The Formspree Ajax SDK owns the actual network call; we just
-  // populate the hidden inputs before it fires so the submission
-  // carries the full quiz context alongside name + email.
+  // ── Build payload ──────────────────────────────────────────────
   const resultKey = calculateResult();
   const result    = RESULTS[resultKey];
 
-  document.getElementById('hiddenResultType').value    = result.badge;
-  document.getElementById('hiddenResultHeading').value = result.heading;
-  document.getElementById('hiddenAnswers').value       = JSON.stringify(answers);
-  document.getElementById('hiddenSubmittedAt').value   = new Date().toISOString();
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Sending…';
 
-  // Delegate to the Formspree Ajax SDK — it handles the POST,
-  // disables the submit button during flight, and surfaces any
-  // server-side field errors via data-fs-error attributes.
-  // The SDK fires its own submit on the <form> element.
-  document.getElementById('fs-quiz-form').dispatchEvent(
-    new Event('submit', { bubbles: true, cancelable: true })
-  );
+  const payload = {
+    firstName:     firstName,
+    email:         email,
+    _replyto:      email,
+    _subject:      'FloorplayUnfiltered Quiz — New Result',
+    resultType:    result.badge,
+    resultHeading: result.heading,
+    answers:       JSON.stringify(answers),
+    submittedAt:   new Date().toISOString()
+  };
+
+  // ── POST directly to Formspree ─────────────────────────────────
+  try {
+    const response = await fetch('https://formspree.io/f/mqpqkbgy', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      showThankYou(firstName);
+    } else {
+      throw new Error('Non-OK: ' + response.status);
+    }
+  } catch (err) {
+    console.error('Submission error:', err);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Get my results';
+    document.getElementById('submitError').classList.add('visible');
+  }
 }
 
 function skipEmail() {
@@ -1144,33 +1130,10 @@ function restartQuiz() {
 }
 
 
-// ── FORMSPREE AJAX SDK CALLBACK ────────────────────────────────
-// Called by the SDK after a successful submission. Hands off to
-// the existing thank-you → results flow.
-function fsSuccessHandler() {
-  const firstName = document.getElementById('firstName').value.trim();
-  showThankYou(firstName);
-}
 
 </script>
 
-<!--
-  Formspree Ajax SDK (CDN, no bundler needed).
-  initForm connects the SDK to our form and wires the success callback.
-  The SDK handles: POST to Formspree, button disable during flight,
-  field-level aria-invalid, data-fs-error population, and data-fs-success reveal.
--->
-<script>
-  window.formspree = window.formspree || function () {
-    (formspree.q = formspree.q || []).push(arguments);
-  };
-  formspree('initForm', {
-    formElement: '#fs-quiz-form',
-    formId:      'mqpqkbgy',          // Live Formspree endpoint
-    onSuccess:   fsSuccessHandler     // Fires our thank-you → results flow
-  });
-</script>
-<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+<!-- Formspree SDK removed — form submits via direct fetch in submitResults() -->
 
 </body>
 </html>
